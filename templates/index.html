@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Summary Cards -->
+    <section class="summary-section">
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="card-value" id="total-upcoming">--</div>
+                <div class="card-label">Upcoming Shows</div>
+            </div>
+            <div class="summary-card highlight-seoul">
+                <div class="card-value" id="seoul-upcoming">--</div>
+                <div class="card-label">Seoul Shows</div>
+            </div>
+            <div class="summary-card highlight-encore">
+                <div class="card-value" id="encore-upcoming">--</div>
+                <div class="card-label">Encore Shows</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-value" id="artists-tracked">--</div>
+                <div class="card-label">Artists Tracked</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="dashboard-grid">
+        <!-- Filters Sidebar -->
+        <aside class="filters-panel">
+            <h2 class="panel-title">Filters</h2>
+
+            <div class="filter-group">
+                <label class="filter-label">Artists</label>
+                <div id="artist-filters" class="checkbox-group">
+                    <div class="loading-placeholder">Loading artists...</div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Date Range</label>
+                <input type="date" id="date-from" class="filter-input">
+                <input type="date" id="date-to" class="filter-input">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Show</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="show-upcoming" checked>
+                        <span>Upcoming</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="show-past">
+                        <span>Past (strikethrough)</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="show-tbd" checked>
+                        <span>TBD Dates</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Special</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="seoul-only">
+                        <span>Seoul Only</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="encore-only">
+                        <span>Encore Only</span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="apply-filters" class="btn btn-secondary btn-full">Apply Filters</button>
+            <button id="clear-filters" class="btn btn-text btn-full">Clear All</button>
+
+            <!-- Highlights Section -->
+            <div class="highlights-section">
+                <h3 class="section-title">Highlights</h3>
+
+                <div class="highlight-group">
+                    <h4 class="highlight-title seoul-highlight">Seoul Kickoffs</h4>
+                    <div id="seoul-kickoffs" class="highlight-list">
+                        <div class="empty-state">No Seoul kickoffs</div>
+                    </div>
+                </div>
+
+                <div class="highlight-group">
+                    <h4 class="highlight-title encore-highlight">Encore Shows</h4>
+                    <div id="encore-shows" class="highlight-list">
+                        <div class="empty-state">No encore shows</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Concert List -->
+        <section class="concerts-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Concert Schedule</h2>
+                <div class="sort-controls">
+                    <label>Sort by:</label>
+                    <select id="sort-by" class="sort-select">
+                        <option value="date">Date</option>
+                        <option value="artist">Artist</option>
+                        <option value="city">City</option>
+                    </select>
+                    <select id="sort-order" class="sort-select">
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="concert-list" class="concert-list">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading concerts...</p>
+                </div>
+            </div>
+
+            <div id="pagination" class="pagination">
+                <button id="prev-page" class="btn btn-secondary" disabled>Previous</button>
+                <span id="page-info">Page 1</span>
+                <button id="next-page" class="btn btn-secondary" disabled>Next</button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Add Artist Modal -->
+<div id="add-artist-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Artist</h2>
+            <button class="modal-close">&times;</button>
+        </div>
+        <form id="add-artist-form">
+            <div class="form-group">
+                <label for="artist-name">Name *</label>
+                <input type="text" id="artist-name" required placeholder="e.g., BLACKPINK">
+            </div>
+            <div class="form-group">
+                <label for="korean-name">Korean Name</label>
+                <input type="text" id="korean-name" placeholder="e.g., 블랙핑크">
+            </div>
+            <div class="form-group">
+                <label for="twitter-handle">Twitter Handle</label>
+                <input type="text" id="twitter-handle" placeholder="e.g., @BLACKPINK">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Artist</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Tour Modal -->
+<div id="add-tour-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Tour</h2>
+            <button class="modal-close">&times;</button>
+        </div>
+        <form id="add-tour-form">
+            <div class="form-group">
+                <label for="tour-artist">Artist *</label>
+                <select id="tour-artist" required>
+                    <option value="">Select artist...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tour-name">Tour Name *</label>
+                <input type="text" id="tour-name" required placeholder="e.g., BORN PINK WORLD TOUR">
+            </div>
+            <div class="form-group">
+                <label for="tour-year">Year</label>
+                <input type="number" id="tour-year" min="2020" max="2030" placeholder="2025">
+            </div>
+            <div class="form-group">
+                <label class="checkbox-item">
+                    <input type="checkbox" id="tour-has-tbd">
+                    <span>More dates to be announced</span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Tour</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <button id="add-artist-btn" class="fab" title="Add Artist">+</button>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}K-Pop Concert Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">K-Pop Concert Tracker</h1>
+            <nav class="nav">
+                <a href="/" class="nav-link active">Dashboard</a>
+                <a href="/docs" class="nav-link" target="_blank">API Docs</a>
+            </nav>
+            <div class="header-actions">
+                <button id="refresh-btn" class="btn btn-primary">
+                    <span class="refresh-icon">&#8635;</span> Refresh
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <span id="last-updated">Last updated: --</span>
+            <span class="separator">|</span>
+            <span id="twitter-status">Twitter: Checking...</span>
+        </div>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
