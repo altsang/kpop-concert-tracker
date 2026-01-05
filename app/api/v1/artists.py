@@ -22,8 +22,12 @@ from app.schemas.artist import (
 router = APIRouter()
 
 
-def _artist_to_response(artist: Artist, upcoming_count: int = 0) -> ArtistResponse:
-    """Convert Artist model to response schema."""
+def _artist_to_response(artist: Artist, upcoming_count: int = 0, tours_count: int = 0) -> ArtistResponse:
+    """Convert Artist model to response schema.
+
+    Note: tours_count and upcoming_count must be calculated before calling this function
+    to avoid async relationship loading issues.
+    """
     return ArtistResponse(
         id=artist.id,
         name=artist.name,
@@ -36,7 +40,7 @@ def _artist_to_response(artist: Artist, upcoming_count: int = 0) -> ArtistRespon
         group_type=artist.group_type,
         members_count=artist.members_count,
         debut_year=artist.debut_year,
-        tours_count=len(artist.tours) if artist.tours else 0,
+        tours_count=tours_count,
         upcoming_shows_count=upcoming_count,
         created_at=artist.created_at,
         updated_at=artist.updated_at,
@@ -80,7 +84,7 @@ async def create_artist(
     await db.commit()
     await db.refresh(artist)
 
-    return _artist_to_response(artist)
+    return _artist_to_response(artist, upcoming_count=0)
 
 
 @router.get("", response_model=ArtistListResponse)
@@ -114,11 +118,12 @@ async def list_artists(
     artist_responses = []
     for artist in artists:
         upcoming_count = 0
+        tours_count = len(artist.tours)
         for tour in artist.tours:
             for tour_date in tour.dates:
                 if tour_date.date and tour_date.date >= today:
                     upcoming_count += 1
-        artist_responses.append(_artist_to_response(artist, upcoming_count))
+        artist_responses.append(_artist_to_response(artist, upcoming_count, tours_count))
 
     return ArtistListResponse(artists=artist_responses, total_count=len(artist_responses))
 
@@ -143,12 +148,13 @@ async def get_artist(
 
     today = date.today()
     upcoming_count = 0
+    tours_count = len(artist.tours)
     for tour in artist.tours:
         for tour_date in tour.dates:
             if tour_date.date and tour_date.date >= today:
                 upcoming_count += 1
 
-    return _artist_to_response(artist, upcoming_count)
+    return _artist_to_response(artist, upcoming_count, tours_count)
 
 
 @router.put("/{artist_id}", response_model=ArtistResponse)
@@ -160,7 +166,7 @@ async def update_artist(
     """Update an artist."""
     result = await db.execute(
         select(Artist)
-        .options(selectinload(Artist.tours))
+        .options(selectinload(Artist.tours).selectinload(Tour.dates))
         .where(Artist.id == artist_id)
     )
     artist = result.scalar_one_or_none()
@@ -180,7 +186,18 @@ async def update_artist(
     await db.commit()
     await db.refresh(artist)
 
-    return _artist_to_response(artist)
+    # Calculate upcoming shows
+    from datetime import date
+
+    today = date.today()
+    upcoming_count = 0
+    tours_count = len(artist.tours)
+    for tour in artist.tours:
+        for tour_date in tour.dates:
+            if tour_date.date and tour_date.date >= today:
+                upcoming_count += 1
+
+    return _artist_to_response(artist, upcoming_count, tours_count)
 
 
 @router.delete("/{artist_id}", status_code=204)
